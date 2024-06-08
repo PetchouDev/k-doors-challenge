@@ -5,6 +5,7 @@ from .entite import Entite
 from typing import TYPE_CHECKING
 from engine.utils import Vector
 import pygame
+import random
 
 import time
 
@@ -29,7 +30,7 @@ class Gobelin(Entite):
         )
 
         # Déclarer la feuille de texture du monstre
-        self.sheet = pygame.image.load("ressources/entities/orc_1.png")
+        self.sheet = pygame.image.load(f"ressources/entities/gobelin_{random.choice([1, 2])}.png")
         self.image_sheet_size = (32, 32)
 
         # Charger l'image du monstre
