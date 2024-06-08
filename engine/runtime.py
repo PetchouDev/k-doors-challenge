@@ -578,7 +578,7 @@ class Runtime():
                     image: pygame.Surface = item.images.copy().get("common")
                 except AttributeError:
                     image = item.image
-                    image = resize(image, 0.5)
+                    image = resize(image, 1.7)
                     
                 
                 self.display.blit(image, (start[0] + 2, start[1] + 2))
@@ -591,6 +591,7 @@ class Runtime():
                     self.display.blit(label, (start[0] +taille_inv//2 - 22, start[1] + taille_inv - 25))
             
             pygame.draw.rect(self.display, (220, 220, 220), (start, (taille_inv, taille_inv)), taille_bordure)
+
 
 
     def afficher_entites(self, attaque=False, corrected_movement=Vector(0, 0), render_movement=Vector(0, 0)):
