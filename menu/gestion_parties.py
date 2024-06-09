@@ -47,7 +47,7 @@ class GestionParties(tk.Toplevel):
 
             # mettre à jour le fichier de sauvegarde
             with open(f"{PATH}/data/saves.json", "w") as f:
-                json.dump(self.saves, f)
+                json.dump(self.master.games, f)
 
             # mettre à jour l'affichage
             self.widgets()
