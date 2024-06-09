@@ -4,7 +4,7 @@ import PIL.Image
 
 from .new_game_launcher import New_game
 from .information import Information
-from .menu_score import menu_score
+from .menu_score import Menu_score
 from .gestion_parties import GestionParties
 from tkinter import *
 
@@ -24,8 +24,8 @@ class MenuPrincipal (tk.Tk):
         self.title("K'Doors   Challenge  ")
         self.resizable(height = False, width = False)
         self.creer_widgets()
-        self.h_fen_info = 1414
-        self.l_fen_info=813
+        self.h_fen_info = 913
+        self.l_fen_info=905
 
 
         self.l_fen_score = 650
@@ -43,6 +43,11 @@ class MenuPrincipal (tk.Tk):
             self.games = json.load(open("data/saves.json", "r"))
         except FileNotFoundError:
             print("Fichier de sauvegarde introuvable, création d'un nouveau fichier")
+            self.games = {}
+            os.makedirs("data", exist_ok=True)
+            json.dump(self.games, open("data/saves.json", "w"))
+        except json.decoder.JSONDecodeError:
+            print("Fichier de sauvegarde corrompu, création d'un nouveau fichier")
             self.games = {}
             os.makedirs("data", exist_ok=True)
             json.dump(self.games, open("data/saves.json", "w"))
@@ -72,6 +77,9 @@ class MenuPrincipal (tk.Tk):
         self.protocol("WM_DELETE_WINDOW", self.quitter)
 
     def creer_widgets(self):
+        '''
+        Création des widgets un à un et insertion grâce aux fonctions grid()
+        '''
         IMAGE_PATH = 'menu/fond_menu.png'
         WIDTH, HEIGTH = 690, 465
 
@@ -121,18 +129,34 @@ class MenuPrincipal (tk.Tk):
        
         
     def quitter(self, event=None):
+        """
+        fonction permettant de quitter proprement le programme
+        :paramètres: 
+        :return:
+        """
         self.destroy()
         sys.exit()
 
 
     def tableau_score(self, event ):
+        """
+        fonction callback qui affiche le tableau des scores dans une nouvelle fenêtre tkinter
+        :paramètres: event pour le lier au bouton "bouton_score"
+        :return:
+        """
         if (self.fen_score != None) :
             self.fen_score.destroy()
-        self.fen_score = menu_score(self, self.l_fen_score, self.h_fen_score)
+        self.fen_score = Menu_score(self, self.l_fen_score, self.h_fen_score)
 
     def information(self, event):
+
+        """
+        fonction callback qui affiche les informations de réalisation du projet, à partir d'une image .png, dans une nouvelle fenêtre tkinter
+        :paramètres: event pour le lier au bouton "bouton_info"
+        :return:
+        """
         fen=Information(self, self.l_fen_info, self.h_fen_info )
-        fen.geometry("1414x813")
+        fen.geometry("913x905")
         fen.title("Credits")
         IMAGE_PATH = 'menu/Credits.png'
         
@@ -154,12 +178,23 @@ class MenuPrincipal (tk.Tk):
         fen.mainloop()
 
     def new_game(self, event):
+        """
+        fonction callback qui affiche une nouvelle fenêtre dans laquelle on peut paramétrer le nom et la taille de la carte de la nouvelle partie
+        :paramètres: event pour le lier au bouton "bouton_nouvelle"
+        :return:
+        """
         if (self.fen_launcher != None) :
             self.fen_launcher.destroy()
         self.fen_launcher= New_game(self, self.l_fen_launcher, self.h_fen_launcher)
         
 
     def create_new_game(self, nom: str, size: int):
+        """
+          fonction qui crée une nouvelle partie correspondant 
+          :paramètres: nom: string donnant le nom de la partie
+                     : size : int donnant la taille de la carte de la nouvelle partie
+          :return:
+        """
         # récupérer un id unique
         id = 0
         while id in self.games:
@@ -184,9 +219,20 @@ class MenuPrincipal (tk.Tk):
         self.start_game(num)
 
     def gestion_parties(self, event):
+        """
+        fonction callback qui affiche une nouvelle fenêtre dans laquelle on peut choisir de supprimer une ancienne partie ou rejouer à une ancienne partie
+        :paramètres: event pour le lier au bouton "bouton_ancien_partie"
+        :return:
+        """
+        
         GestionParties(self)
 
     def start_game(self, id: int):
+        """
+          fonction qui lance la partie correspondant à l'id
+          :paramètres: id: entier représentant l'identité de la partie
+          :return:
+        """
         try:
             self.destroy()
         except Exception as e:
