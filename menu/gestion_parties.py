@@ -6,6 +6,11 @@ import os, pathlib, json
 PATH = pathlib.Path(__file__).parent.parent.absolute()
 
 class GestionParties(tk.Toplevel):
+    """
+        Initialise un objet GestionParties avec le widget maitre et les dimensions spécifiées de la fenêtre.
+
+        
+    """
     def __init__(self, master):
         super().__init__()
         self.master = master
@@ -14,6 +19,9 @@ class GestionParties(tk.Toplevel):
         self.widgets()
 
     def widgets(self):
+        '''
+        Création des widgets un à un et insertion grâce aux fonctions grid()
+        '''
         # supprimer tous les widgets
         for widget in self.winfo_children():
             widget.destroy()
@@ -38,6 +46,11 @@ class GestionParties(tk.Toplevel):
             tk.Button(self, text="Lancer", font=("Arial", 12), command=lambda: self.lancer_partie(id)).grid(row=i+1, column=6, columnspan=2)
 
     def supprimer_partie(self, id):
+        """
+          fonction qui supprime la partie correspondant à l'id
+          :paramètres: id: entier représentant l'identité de la partie
+          :return:
+        """
         if messagebox.askyesno("Confirmation", "Voulez-vous vraiment supprimer cette partie?"):
             # supprimer le fichier de sauvegarde
             os.remove(f"{PATH}/data/{self.master.games[id]['nom']}.json")
@@ -53,4 +66,10 @@ class GestionParties(tk.Toplevel):
             self.widgets()
 
     def lancer_partie(self, id):
+        """
+          fonction qui lance la partie
+          :paramètres: id : entier représentant l'identité de la partie
+          :return:
+          """
+
         self.master.start_game(id)

@@ -4,7 +4,7 @@ import PIL.Image
 
 from .new_game_launcher import New_game
 from .information import Information
-from .menu_score import Menu_score
+from .menu_score import Scores
 from .gestion_parties import GestionParties
 from tkinter import *
 
@@ -146,7 +146,7 @@ class MenuPrincipal (tk.Tk):
         """
         if (self.fen_score != None) :
             self.fen_score.destroy()
-        self.fen_score = Menu_score(self, self.l_fen_score, self.h_fen_score)
+        self.fen_score = Scores(self)
 
     def information(self, event):
 

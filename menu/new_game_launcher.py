@@ -7,7 +7,7 @@ class New_game(tk.Toplevel):
 
     def __init__(self, master, width, height):  
         """
-        Initialise un objet FenetreAvecGraphique avec le widget maitre et les dimensions spécifiéesde la fenêtre.
+        Initialise un objet New_game avec le widget maitre et les dimensions spécifiées de la fenêtre.
 
         Args:
             width (int): Largeur de la fenêtre.
@@ -23,6 +23,9 @@ class New_game(tk.Toplevel):
         self.creer_widgets()
 
     def creer_widgets(self):
+        '''
+        Création des widgets un à un et insertion grâce aux fonctions grid()
+        '''
         
          # Couleurs
         bg_color = "#2c3e50"
