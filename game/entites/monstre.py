@@ -1,32 +1,41 @@
+# Libraries de la librairie standard Python
 from __future__ import annotations
-
-from .entite import Entite
-
-from typing import TYPE_CHECKING
-from engine.utils import Vector
-import pygame
+import time
 import random
 
-import time
+# Bibliothèques tierces
+import pygame
 
-if TYPE_CHECKING:
-    ...
+# Bibliothèques de l'application
+from .entite import Entite
+from engine.utils import Vector
 
 
 class Gobelin(Entite):
     """Un gobelin, une entité hostile du jeu"""
 
+    __slots__ = ["sheet", "image_sheet_size", "image", "rect", "orientation", "frame", "clock", "images"]
+
     def __init__(self, position: Vector) -> None:
+        """
+        Initialise un objet Monstre avec les attributs spécifiés.
+
+        Args:
+            position (Vector): La position initiale du monstre.
+
+        Returns:
+            None
+        """
         super().__init__(
             nom="Gobelin",
             vie=20,
             vie_max=20,
             position=position,
-            vitesse=0.6, # lent
+            vitesse=0.6,  # lent
             degats=10,
             width=16,
             height=24,
-            temps_attente=1000 # 1 seconde
+            temps_attente=1000  # 1 seconde
         )
 
         # Déclarer la feuille de texture du monstre
@@ -38,7 +47,7 @@ class Gobelin(Entite):
 
         # Créer un rect pour l'image du monstre
         self.rect = self.image.get_rect()
-        
+
         # definir une oriantation pour le monstre (par défault au sud)
         self.orientation = "S"
 
@@ -82,7 +91,6 @@ class Gobelin(Entite):
         # rect
         self.rect = self.image.get_rect()
 
-
     def from_json(data_json: dict) -> Gobelin:
         """
         Creates a Gobelin object from a JSON dictionary.
@@ -98,12 +106,18 @@ class Gobelin(Entite):
         )
     
     def get_frame(self, velocity: Vector) -> pygame.Surface:
-        # obtenir la frame
+        """
+        Renvoie la frame actuelle du monstre en fonction de sa vitesse.
+
+        Args:
+            velocity (Vector): La vitesse actuelle du monstre.
+
+        Returns:
+            pygame.Surface: La surface représentant la frame du monstre.
+        """
         elapsed_time = time.time() - self.last_frame
         if elapsed_time > 0.2:
             self.frame = (self.frame + 1) % 4
             self.last_frame = time.time()
 
         return self.images[self.orientation][self.frame]
-
-

@@ -1,15 +1,16 @@
+# Libraries de la bibliothèque standard
 from __future__ import annotations
-
 from typing import List, Tuple, Callable, Any, Optional, TYPE_CHECKING
 import datetime
 import time
 
+# Bibliothèques tierces
 import pygame
 pygame.init()
 
+# Bibliothèques de l'application
 from engine.utils import Vector
 from game.constantes import SWORD_SPRITE
-
 from .objet import Objet
 from ..utils import get_image
 
@@ -17,8 +18,10 @@ from ..utils import get_image
 if TYPE_CHECKING:
     from ..entites import Joueur, Entite
 
+
 class Arme(Objet):
-    """Une classe représentant une arme du jeu
+    """
+    Une classe représentant une arme du jeu
     Une arme peut être utilisée et avoir des effets lorsqu'elle est utilisée (avec succès)
     """
 
@@ -28,6 +31,19 @@ class Arme(Objet):
             self, 
             nom:str, description:str, quantite:int=1, quantite_max:int=1, degats:int=0, 
             effets: List[Tuple[Callable, List[Any]]] = [], temps_attente:int = 0) -> None:
+        """
+        Initialise un objet de type Arme avec les paramètres spécifiés.
+
+        Args:
+            nom (str): Le nom de l'arme.
+            description (str): La description de l'arme.
+            quantite (int, optional): La quantité d'armes. Par défaut 1.
+            quantite_max (int, optional): La quantité maximale d'armes. Par défaut 1.
+            degats (int, optional): Les dégâts infligés par l'arme. Par défaut 0.
+            effets (List[Tuple[Callable, List[Any]]], optional): Les effets spéciaux de l'arme. Par défaut [].
+            temps_attente (int, optional): Le temps d'attente avant de pouvoir réutiliser l'arme. Par défaut 0.
+        """
+        # Appeler le constructeur de la classe mère
         super().__init__(nom, description, quantite, quantite_max)
         self.degats = degats
 
@@ -64,9 +80,24 @@ class Arme(Objet):
         
     @property
     def label(self) -> str:
+        """
+        Renvoie une chaîne de caractères représentant l'arme.
+
+        Returns:
+            str: La chaîne de caractères représentant l'arme, au format "{nom} ({degats} dégâts)".
+        """
         return f"{self.nom} ({self.degats} dégâts)"
 
     def from_json(data_json: dict) -> Arme:
+        """
+        Crée une instance de la classe Arme à partir d'un dictionnaire JSON.
+
+        Args:
+            data_json (dict): Le dictionnaire JSON contenant les données de l'arme.
+
+        Returns:
+            Arme: L'instance de la classe Arme créée à partir des données JSON.
+        """
         arme = Arme(
             nom = data_json["nom"],
             description = data_json["description"],
@@ -79,6 +110,12 @@ class Arme(Objet):
         return arme
 
     def to_json(self) -> dict:
+        """
+        Convertit l'objet en un dictionnaire JSON.
+
+        Retourne:
+            dict: Le dictionnaire JSON représentant l'objet.
+        """
         return {
             **super().to_json(),
             "degats": self.degats,
@@ -89,13 +126,23 @@ class Arme(Objet):
 class Epee(Arme):
     """Une classe représentant une épée, une arme du jeu qui inflige des dégâts à une entité"""
 
+    __slots__ = ("frame", "clock", "last_frame", "sheet", "image_sheet_size", "images", "offsets", "image", "rect", 
+                    "temps_attente", "icone")
+
     def __init__(self, degats:int=5) -> None:
+        """
+        Initialise un objet Arme avec les paramètres spécifiés.
+
+        Args:
+            degats (int, optional): Les points de dégâts infligés par l'arme. Par défaut 5.
+        """
+        
         super().__init__(
             nom = "Épée",
             description = "Une épée basique. Inflige x points de dégâts à une entité. Aucun effet spécial. 0.2s d'attente entre 2 attaques.",
             degats = degats,
             temps_attente = 200 # en millisecondes
-            )
+        )
         
         # variables d'animation
         self.frame = 0
@@ -186,20 +233,45 @@ class Epee(Arme):
         self.image = self.get_image(0, 0)
         self.rect = self.image.get_rect()
     
-
-    
     def from_json(data_json: dict) -> Epee:
+        """
+        Crée une instance de la classe Epee à partir des données JSON fournies.
+
+        Args:
+            data_json (dict): Les données JSON contenant les informations de l'épée.
+
+        Returns:
+            Epee: Une instance de la classe Epee avec les informations extraites des données JSON.
+        """
         epee = Epee()
         epee.est_selectionne = data_json["est_selectionne"]
         return epee
 
-
     def get_image(self, row:int, col:int) -> pygame.Surface:
-        """Récupère une image de la feuille de sprite"""
+        """
+        Renvoie l'image correspondante à la position donnée.
+
+        Args:
+            row (int): La ligne de l'image dans la grille.
+            col (int): La colonne de l'image dans la grille.
+
+        Returns:
+            pygame.Surface: L'image correspondante à la position donnée.
+        """
         return get_image(self, col, row, resize=64)
     
     def draw(self, screen: pygame.Surface, player:Joueur) -> None:
-        """Dessine l'épée sur l'écran"""
+        """
+        Dessine l'arme à l'écran en fonction de l'état du joueur.
+
+        Args:
+            screen (pygame.Surface): La surface sur laquelle l'arme doit être dessinée.
+            player (Joueur): Le joueur dont l'état détermine l'apparence de l'arme.
+
+        Returns:
+            None
+        """
+        
         self.clock = time.time()
 
         # si le joueur n'est pas en train d'attaquer, on affiche l'épée normalement

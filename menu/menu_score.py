@@ -1,20 +1,37 @@
 import tkinter as tk
-import json
 
 class Scores(tk.Toplevel):
+    """Classe pour afficher les scores dans une fenêtre tkinter."""
+
     __slots__=["master"]
 
-    def __init__(self, master):
+    def __init__(self, master) -> None:
+        """
+        Initialise la classe MenuScore.
+
+        :param master: La fenêtre principale de l'application.
+        """
         super().__init__()
         self.master = master
         self.title("Gestion des parties")
         self.resizable(height=True, width=True)
         self.widgets()
 
-    def widgets(self):
-        '''
+    def widgets(self) -> None:
+        """
         Création des widgets un à un et insertion grâce aux fonctions grid()
-        '''
+
+        Cette méthode crée et insère les widgets un par un en utilisant la fonction grid().
+
+        Paramètres:
+            - self: L'instance de la classe.
+
+        Retour:
+            Aucun.
+
+        Exemple:
+            widgets(self)
+        """
         # supprimer tous les widgets
         for widget in self.winfo_children():
             widget.destroy()

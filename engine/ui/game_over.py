@@ -1,21 +1,40 @@
 import tkinter as tk
+
 from PIL import ImageTk
 import PIL.Image
 
+
 class GameOver(tk.Tk):
+    """Fenêtre affichée lorsque le joueur perd la partie."""
+
+    __slots__ = ["score", "recommencer", "image_path", "image", "image_width", "image_height", "photo", "canvas", "score_label", "restart_button", "quit_button"]  
+
     def __init__(self, score: int) -> None:
+        """
+        Initialise la fenêtre de Game Over.
+
+        Args:
+            score (int): Le score du joueur.
+
+        Returns:
+            None
+        """
+        # appeler le constructeur de la classe mère
         super().__init__()
 
+        # configuration de la fenêtre
         self.title("Game Over")
         self.geometry("520x470")
-        self.resizable(height = False, width = False)
+        self.resizable(height=False, width=False)
 
+        # score du joueur
         self.score = score
 
+        # est ce que le joueur veut recommencer
         self.recommencer = False
-        self.image_path = "ressources/Game_over.png"
+        self.image_path = "ressources/menu/Game_over.png"
 
-       # Charger l'image et obtenir ses dimensions
+        # Charger l'image et obtenir ses dimensions
         self.image = PIL.Image.open(self.image_path)
         self.image_width, self.image_height = self.image.size
         self.photo = ImageTk.PhotoImage(self.image)
@@ -39,22 +58,19 @@ class GameOver(tk.Tk):
         self.quit_button = tk.Button(self, text="Quitter", command=self.quit, bg="black", fg="white")
         self.canvas.create_window(2 * self.image_width // 3, self.image_height * 0.9, window=self.quit_button)
 
-
     def restart(self):
+        """
+        Redémarre le jeu en définissant la variable 'recommencer' sur True et en détruisant la fenêtre actuelle.
+        """
         self.recommencer = True
         self.destroy()
 
     def quit(self):
+        """
+        Ferme la fenêtre du jeu.
+        """
         self.destroy()
-
 
     def get_user_input(self) -> bool:
         self.mainloop()
         return self.recommencer
-    
-# test de la classe
-if __name__ == "__main__":
-    game_over = GameOver(100)
-    game_over.configure(bg="black")
-    recommencer = game_over.get_user_input()
-    print(recommencer)

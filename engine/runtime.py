@@ -1,34 +1,35 @@
+# Modules de la bibliothèque standard Python
+import pathlib
+from datetime import datetime, timedelta
+from random import randint
+from typing import Optional
+import traceback
+
+# Bibliothèques tierces
 import pygame
 
-import pathlib
-
+# Modules locaux
 from engine.ui.tilemap import Tilemap
-from engine.utils.vector import Vector
-from random import randint
-
-from game.constantes import (
-    PLAYER_SPEED, FRAME_RATE, DEAD_ZONE, DEBUG, NB_EMPLACEMENTS_INVENTAIRE, TAILLE_BORDURE_INVENTAIRE, 
-    DISTANCE_AGRO_MONSTRES, DISTANCE_AGRO_STOP_MONSTRES, DISTANCE_ATTAQUE_MONSTRE, RECUl_DEGATS_ATTAQUANT,
-    NB_COEUR_MAX, VIE_JOUEUR_DEFAUT, SOUNDS, DISTANCE_ATTAQUE_JOUEUR, GHOST, DISTANCE_POUR_RAMASSER_OBJET,
-    RECUL_DEGATS_ATTAQUEE)
-from game.game import Game
-from datetime import datetime, timedelta
-
-from game.entites import Joueur, Gobelin, ObjetAuSol
-from game.objets import Arme, Epee, Coeur, Potion, Cle, Prop, Consommable, Botte
-from math import exp
-
-from typing import Optional, List
-import traceback
-from .utils import resize
-
 from engine.ui.game_over import GameOver
 from engine.ui.fin_niveau import FinNiveau
+from engine.utils.vector import Vector
 
+from game.game import Game
+from game.constantes import (
+    PLAYER_SPEED, FRAME_RATE, DEAD_ZONE, DEBUG, NB_EMPLACEMENTS_INVENTAIRE,
+    TAILLE_BORDURE_INVENTAIRE, DISTANCE_AGRO_MONSTRES, DISTANCE_AGRO_STOP_MONSTRES,
+    DISTANCE_ATTAQUE_MONSTRE, RECUl_DEGATS_ATTAQUANT, VIE_JOUEUR_DEFAUT, SOUNDS,
+    DISTANCE_ATTAQUE_JOUEUR, GHOST, DISTANCE_POUR_RAMASSER_OBJET,RECUL_DEGATS_ATTAQUEE
+    )
+from game.entites import Joueur, ObjetAuSol
+from game.objets import Arme, Epee, Coeur, Potion, Cle, Prop, Consommable, Botte
 
+from .utils import resize
 
+# Chemin absolu du fichier
 PATH = pathlib.Path(__file__).parent.parent
 
+# Charger les images des objets
 HEART = pygame.image.load("ressources/objects/heart.png")
 HEART = pygame.transform.scale(HEART, (32, 32))
 HEART.set_colorkey((255, 255, 255))
@@ -41,27 +42,31 @@ BOTTE = pygame.image.load("ressources/objects/botte.png")
 BOTTE = pygame.transform.scale(BOTTE, (32, 32))
 BOTTE.set_colorkey((255, 255, 255))
 
-# set the key repeat
-pygame.key.set_repeat(1, 20) # allow holding after 1ms, repeat every 20ms => 50 fps
+# Autoriser la répétition des touches
+pygame.key.set_repeat(1, 20) # Répétition des touches toutes les 20ms
 
-attente_prochaine_attaque = None
+# Variable globale pour le temps d'attente entre chaque attaque
+ATTENTE_PROCHAINE_ATTAQUE = None
 
 class Runtime():
-    def __init__(self, game:Optional[Game]=None, width=800, height=600):        
+    """Classe principale du jeu"""
+
+    def __init__(self, game:Optional[Game]=None, width=800, height=600) -> None:
+        """
+        Initialise la classe Runtime.
+
+        Args:
+            game (Optional[Game], optional): L'objet Game contenant les informations sur l'étage actuel. 
+                                            Si None, un nouvel étage sera créé. Par défaut None.
+            width (int, optional): La largeur de l'écran. Par défaut 800.
+            height (int, optional): La hauteur de l'écran. Par défaut 600.
+        """
         # (re)initialize pygame module
-        if pygame.get_init():
-            pygame.quit()
-        if pygame.mixer.get_init():
-            pygame.mixer.quit()
-        if pygame.font.get_init():
-            pygame.font.quit()
-        
         pygame.init()
         pygame.mixer.init()
         pygame.font.init()
 
         self.font = pygame.font.SysFont("monospace", 20, bold=True)
-
 
         # Game contient toutes les informations sur l'étage actuel, et donc la partie
         # si game est None, alors on crée un nouvel étage
@@ -180,8 +185,14 @@ class Runtime():
 
         print("Initialisation terminée")    
     
+    def toggle_fullscreen(self) -> pygame.Surface:
+        """
+        Bascule entre le mode plein écran et le mode fenêtré.
 
-    def toggle_fullscreen(self):
+        Returns:
+            pygame.Surface: La surface d'affichage mise à jour.
+        """
+        ATTENTE_PROCHAINE_ATTAQUE = 0.5
         # toggle the fullscreen mode
         self.fullscreen = not self.fullscreen
 
@@ -194,7 +205,20 @@ class Runtime():
         # return the display
         return self
     
-    def update(self, corrected_movement, render_movement, offset, attaque=False):
+    def update(self, corrected_movement, render_movement, offset, attaque=False) -> bool:
+        """
+        Met à jour l'écran de jeu.
+
+        Args:
+            corrected_movement (Vector): Le mouvement corrigé du joueur.
+            render_movement (Vector): Le mouvement de rendu du joueur.
+            offset (Vector): Le décalage de l'écran.
+            attaque (bool, optional): Indique si le joueur est en train d'attaquer. Par défaut False.
+
+        Returns:
+            bool: True si le joueur est mort, False sinon.
+        """
+        
         # draw the elements of the map
         try:
             self.map.draw(self.display, offset, portes=self.game.portes)
@@ -239,7 +263,14 @@ class Runtime():
 
         return False
     
-    def utiliser_consommable(self):
+    def utiliser_consommable(self) -> bool:
+        """
+        Utilise un consommable sélectionné par le joueur.
+
+        Returns:
+            bool: True si le consommable a été utilisé avec succès, False sinon.
+        """
+        
         item = self.player.get_selected_item()
         if not isinstance(item, Consommable):
             return False
@@ -251,14 +282,21 @@ class Runtime():
         else:
             return False
             
-    def afficher_text_inventaire(self):
-        """Affiche le texte de l'inventaire
-        
-        Args:
-
-        Retourne:
-
+    def afficher_text_inventaire(self) -> None:
         """
+        Affiche le texte de l'inventaire à l'écran.
+
+        Vérifie si le texte à afficher et la durée de l'affichage sont définis.
+        Si oui, vérifie si la date et l'heure actuelles sont inférieures à la date et l'heure de fin de l'affichage.
+        Si toutes les conditions sont remplies, affiche le texte de l'inventaire à l'écran.
+
+        Paramètres:
+            Aucun
+
+        Retour:
+            Aucun
+        """
+        
         if self.text_afficher_inventaire is not None and \
                 self.text_inventaire_jusqua is not None and \
                 datetime.now() < self.text_inventaire_jusqua:
@@ -274,7 +312,15 @@ class Runtime():
                 )
             self.display.blit(self.text_afficher_inventaire, pos)
 
-    def afficher_joueur(self, corrected_movement, render_movement):
+    def afficher_joueur(self, corrected_movement, render_movement) -> None:
+        """
+        Affiche le joueur à l'écran avec les éléments de débogage.
+
+        Args:
+            corrected_movement (tuple): Mouvement corrigé du joueur.
+            render_movement (tuple): Mouvement à afficher à l'écran.
+        """
+        
 
         # draw the player
         self.player.draw(render_movement, corrected_movement, self.display)
@@ -290,16 +336,28 @@ class Runtime():
             # Dessiner un rectangle vide pour la zone morte
             pygame.draw.rect(self.display, (255, 0, 0), (self.width // 2 - DEAD_ZONE[0], self.height // 2 - DEAD_ZONE[1], 2 * DEAD_ZONE[0], 2 * DEAD_ZONE[1]), 2)
 
-    def etage_suivant(self):
+    def etage_suivant(self) -> bool:
+        """
+        Cette méthode permet de passer à l'étage suivant du jeu.
+        
+        Returns:
+            bool: True si l'étage suivant a été atteint, False sinon.
+        """
         return FinNiveau(self.game.score).get_user_input()
 
-    def start(self):
+    def start(self) -> bool:
+        """
+        Démarre le jeu et exécute la boucle principale.
+
+        Returns:
+            bool: True si le joueur souhaite relancer la partie, False sinon.
+        """
+        
         # boucle de jeu
         print("Démarrage de la boucle de jeu")
         # condition d'arrêt
         self.running = True
-        global attente_prochaine_attaque
-
+        global ATTENTE_PROCHAINE_ATTAQUE
 
         # mettre en attente les monstres pour éviter de se faire tuer au démarrage
         for entite in self.game.entites:
@@ -323,11 +381,11 @@ class Runtime():
                 self.states["object_use"] = False
                 item = self.player.get_selected_item()
                 if item and item.nom == "Épée":
-                    if (attente_prochaine_attaque is None or attente_prochaine_attaque < datetime.now()) and isinstance(self.player.get_selected_item(), Arme):
+                    if (ATTENTE_PROCHAINE_ATTAQUE is None or ATTENTE_PROCHAINE_ATTAQUE < datetime.now()) and isinstance(self.player.get_selected_item(), Arme):
                         attaque=True
                         self.player.attaque = True
                         pygame.mixer.Sound("ressources/audio/" + SOUNDS["epee"]).play()
-                        attente_prochaine_attaque = datetime.now() + timedelta(milliseconds=500)
+                        ATTENTE_PROCHAINE_ATTAQUE = datetime.now() + timedelta(milliseconds=500)
                 else:
                     attaque = True
             
@@ -349,8 +407,6 @@ class Runtime():
                     pygame.mixer.Sound("ressources/audio/" + SOUNDS["pas"]).play()
                     self.last_step = datetime.now()
 
-
-
                 # répartir le déplacement entre le joueur et la carte pour que le joueur reste dans la zone morte
                 rendered_movement, offset = self.process_movement(corrected_movement)
 
@@ -368,7 +424,6 @@ class Runtime():
                 # actualiser l'écran
                 pygame.display.flip()
                 
-
                 # replacer le joueur à l'entrée
                 self.player.position = Vector(0, 0)                         #
                                                                             #
@@ -385,10 +440,7 @@ class Runtime():
                 fin_partie = GameOver(self.game.score)
                 fin_partie.configure(bg="black")
                 
-
                 should_restart =fin_partie.get_user_input()
-
-                
 
                 if should_restart:
                     # quitter pygame 
@@ -442,18 +494,30 @@ class Runtime():
                 else:
                     # quitter pygame 
                     self.stop()
+                    # retour au menu
                     return False
                 
         return False
 
-
-    def stop(self):
+    def stop(self) -> None:
+        """
+        Arrête le moteur de jeu en mettant la variable self.running à False,
+        sauvegarde le jeu et quitte pygame.
+        """
         self.running = False
         self.game.save()
         pygame.quit()
 
-    # calculer le vecteur de déplacement du joueur et le déplacement de la carte
-    def process_movement(self, player_movement: Vector):
+    def process_movement(self, player_movement: Vector) -> tuple[Vector, Vector]:
+        """
+        Calcule le déplacement corrigé du joueur et le déplacement de la carte en fonction du mouvement du joueur.
+
+        Args:
+            player_movement (Vector): Le mouvement du joueur.
+
+        Returns:
+            tuple[Vector, Vector]: Le déplacement corrigé du joueur et le déplacement de la carte.
+        """
         offset = Vector(0, 0)
 
         position = self.player.real_pos
@@ -487,27 +551,36 @@ class Runtime():
         offset = corrected_movement - player_movement
 
         return corrected_movement, offset
+    
+    def get_player_movement(self) -> Vector:
+            """
+            Récupère le mouvement du joueur en fonction des états des touches de déplacement.
 
-    # calculer le vecteur de déplacement du joueur
-    def get_player_movement(self):
-        player_movement = Vector(0, 0)
-        if self.states["up"]:
-            player_movement.y -= 1
-        if self.states["down"]:
-            player_movement.y += 1
-        if self.states["left"]:
-            player_movement.x -= 1
-        if self.states["right"]:
-            player_movement.x += 1
+            Returns:
+                Vector: Le vecteur de mouvement du joueur.
+            """
+            player_movement = Vector(0, 0)
+            if self.states["up"]:
+                player_movement.y -= 1
+            if self.states["down"]:
+                player_movement.y += 1
+            if self.states["left"]:
+                player_movement.x -= 1
+            if self.states["right"]:
+                player_movement.x += 1
 
-        return player_movement.normalize()
-
-    def changement_slot_inv(self):
-        """Récupère le changement de slot de l'inventaire et l'applique si besoin
+            return player_movement.normalize()
+    
+    def changement_slot_inv(self) -> None:
+        """
+        Récupère le changement de slot de l'inventaire et l'applique si besoin
         
         Args:
+            None
 
         Retourne:
+            None
+
         """
         if self.states["wheel"] != None:
             if len(self.player.inventaire) > 0:
@@ -532,7 +605,7 @@ class Runtime():
             self.states["wheel"] = None
     
     def afficher_fps(self):
-        """Afficher les fps sur l'écran
+        """Afficher les fps sur l'écran'
         
         Args:
 
@@ -543,12 +616,14 @@ class Runtime():
         text = font.render(f"{int(self.clock.get_fps())} FPS", True, (0, 255, 0))
         self.display.blit(text, (10, 96))
 
-    def afficher_inventaire(self):
+    def afficher_inventaire(self) -> None:
         """Afficher l'inventaire du joueur sur l'écran
         
         Args:
+            None
 
         Retourne:
+            None
 
         """
         self.changement_slot_inv()
@@ -592,16 +667,16 @@ class Runtime():
             
             pygame.draw.rect(self.display, (220, 220, 220), (start, (taille_inv, taille_inv)), taille_bordure)
 
-
-
-    def afficher_entites(self, attaque=False, corrected_movement=Vector(0, 0), render_movement=Vector(0, 0)):
-        """Afficher toutes les entités sur l'écran (hors joueur)
+    def afficher_entites(self, attaque=False, corrected_movement=Vector(0, 0), render_movement=Vector(0, 0)) -> None:
+        """
+        Afficher toutes les entités sur l'écran (hors joueur)
         Calcule aussi les différentes attaques
         
         Args:
             offset (Vector): le déplacement de la carte
 
         Retourne:
+            None
 
         """
         entites = sorted(self.game.entites, key=lambda entite: entite.position.y)
@@ -689,7 +764,18 @@ class Runtime():
         if attaque and not entite_trouvee:
             self.player.en_attente = datetime.now() + timedelta(milliseconds=500)
     
-    def afficher_vie(self):
+    def afficher_vie(self) -> None:
+        """
+        Affiche les vies du joueur, sa vitesse et son score sur l'écran de jeu.
+
+        Cette méthode affiche les vies du joueur sous forme de coeurs noirs et coeurs pleins,
+        en fonction de la quantité de vie restante. Elle affiche également la vitesse du joueur
+        sous forme de bottes, en fonction des buffs de vitesse obtenus. Enfin, elle affiche le
+        score du joueur en blanc.
+
+        :return: None
+        """
+        
         # afficher les coeurs noirs
         nb_coeurs = self.player.vie_max // 20
         for i in range(nb_coeurs):
@@ -717,14 +803,16 @@ class Runtime():
         label = self.font.render(f"Score : {self.game.score}", 1, (0, 0, 0))
         self.display.blit(label, (10, 74))
         
-    def appliquer_recul(self, entite1, entite2):
-        """Applique un recul à l'entité 1 suite à une attaque de l'entité 2
+    def appliquer_recul(self, entite1, entite2) -> None:
+        """
+        Applique un recul à l'entité 1 suite à une attaque de l'entité 2
         
         Args:
             entite1 (Entite): L'entité qui subit le recul
             entite2 (Entite): L'entité qui attaque
 
         Retourne:
+            None
 
         """
         # Calcul du vecteur de recul
@@ -745,14 +833,15 @@ class Runtime():
         rendered_movement, _ = self.process_movement(corrected_movement)
         self.afficher_joueur(corrected_movement=corrected_movement, render_movement=rendered_movement)
     
-    def looter(self, entite):
-        """Permet de looter une entité
+    def looter(self, entite) -> None:
+        """
+        Permet de looter une entité
         
         Args:
             entite (Entite): L'entité à looter
 
         Retourne:
-
+            None
         """
         # si l'entité est le joueur, on ne fait rien
         if isinstance(entite, Joueur):
@@ -806,9 +895,17 @@ class Runtime():
         for loot in loots:
             self.game.entites.append(ObjetAuSol(loot["objet"], entite.position + loot["vecteur"]))
         
+    def handle_event(self, event) -> None:
+        """
+        Gère les événements du jeu.
 
+        Args:
+            event: L'événement à gérer.
 
-    def handle_event(self, event):
+        Returns:
+            None
+        """
+        
         if event.type == pygame.QUIT:
             self.stop()
 
@@ -846,7 +943,3 @@ class Runtime():
 
             elif event.button == 3 and DEBUG:
                 self.player.vie += 10
-
-
-
-

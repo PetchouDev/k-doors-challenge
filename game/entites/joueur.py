@@ -1,21 +1,17 @@
+# Libraries de la bibliothèque standard
 from __future__ import annotations
-
 from time import time
 import tkinter as tk
-
-from PIL import ImageTk
-import PIL.Image
-import pygame
-
 from typing import Union, TYPE_CHECKING
-from .entite import Entite
-from .objet_sol import ObjetAuSol
-from .contenant import Contenant
-from engine.utils import Vector
 from datetime import datetime
 
-from game.objets import Prop
+# Bibliothèques tierces
+import pygame
 
+# Bibliothèques locales
+from engine.utils import Vector
+from .entite import Entite
+from .contenant import Contenant
 from ..constantes import NB_EMPLACEMENTS_INVENTAIRE, SOUNDS, PLAYER_SPEED, VITESSE_MAX_JOUEUR
 
 if TYPE_CHECKING:
@@ -25,8 +21,23 @@ if TYPE_CHECKING:
 class Joueur(Entite, Contenant):
     """Une classe représentant le joueur du jeu"""
 
+    # En raison de l'héritage multiple, nous ne pouvons pas utiliser __slots__ pour cette classe
 
     def __init__(self, nom:str, vie:int, position:Vector, rendered_position:Vector=Vector(0,0), vie_max:int = 100, buff_vitesse:int = None) -> None:
+        """
+        Initialise un objet Joueur avec les paramètres spécifiés.
+
+        Args:
+            nom (str): Le nom du joueur.
+            vie (int): Le nombre de points de vie du joueur.
+            position (Vector): La position du joueur dans l'espace.
+            rendered_position (Vector, optional): La position du joueur à l'écran. Par défaut (0, 0).
+            vie_max (int, optional): Le nombre maximum de points de vie du joueur. Par défaut 100.
+            buff_vitesse (int, optional): Le bonus de vitesse du joueur. Par défaut None.
+
+        Returns:
+            None
+        """
         Entite.__init__(
             self,
             nom=nom,
@@ -130,11 +141,6 @@ class Joueur(Entite, Contenant):
         self.ombre.set_colorkey((0, 0, 0))
         self.ombre_rect = self.ombre.get_rect()
 
-
-    
-
-    
-
     def ajouter_vie(self, vie:int) -> int:
         """Ajoute de la vie au joueur
         
@@ -149,8 +155,18 @@ class Joueur(Entite, Contenant):
         
         return self.vie
     
-    def augmenter_vie_max(self, vie:int):
+    def augmenter_vie_max(self, vie:int) -> int:
+        """
+        Augmente la valeur maximale de vie du joueur.
+
+        Args:
+            vie (int): La quantité de vie à ajouter à la valeur maximale.
+
+        Returns:
+            int: La nouvelle valeur maximale de vie du joueur.
+        """
         self.vie_max += vie
+        return self.vie_max
     
     def retirer_vie(self, vie:int) -> int:
         """Retire de la vie au joueur
@@ -184,7 +200,6 @@ class Joueur(Entite, Contenant):
         self.buff_vitesse = min(self.buff_vitesse + vitesse, VITESSE_MAX_JOUEUR - PLAYER_SPEED)
         
         return self.buff_vitesse
-            
 
     def ajouter_inventaire(self, o_ajout:Objet) -> Union[Objet, bool]:
         """Ajoute un objet à l'inventaire du joueur.
@@ -233,6 +248,16 @@ class Joueur(Entite, Contenant):
         return False # Si l'inventaire est plein, on retourne l'objet restant (qui est le même que l'objet ajouté)
 
     def from_json(data_json: dict) -> Joueur:
+        """
+        Crée une instance de la classe Joueur à partir d'un dictionnaire JSON.
+
+        Args:
+            data_json (dict): Le dictionnaire JSON contenant les données du joueur.
+
+        Returns:
+            Joueur: Une instance de la classe Joueur.
+
+        """
         joueur = Joueur(
             nom=data_json["nom"],
             vie=data_json["vie"],
@@ -245,11 +270,31 @@ class Joueur(Entite, Contenant):
         return joueur
     
     def to_json(self) -> dict:
+        """
+        Convertit l'objet Joueur en un dictionnaire JSON.
+
+        Retourne un dictionnaire contenant les informations de l'entité et du contenant,
+        ainsi que le buff de vitesse du joueur.
+
+        Returns:
+            dict: Un dictionnaire JSON représentant l'objet Joueur.
+        """
         entite_json = Entite.to_json(self)
         contenant_json = Contenant.to_json(self)
         return {**entite_json, **contenant_json, "buff_vitesse": self.buff_vitesse}
 
     def draw(self, rendered_movement: Vector, absolute_movement: Vector, screen: pygame.display) -> None:
+        """
+        Dessine le joueur à l'écran avec sa position mise à jour.
+
+        Args:
+            rendered_movement (Vector): Le mouvement relatif du joueur à l'écran.
+            absolute_movement (Vector): Le mouvement absolu du joueur dans le jeu.
+            screen (pygame.display): L'écran sur lequel le joueur doit être dessiné.
+
+        Returns:
+            None
+        """
         self.rendered_position += rendered_movement
         self.rect.topleft = self.rendered_position.coords
         self.hitbox.midbottom = (Vector(*self.rect.midbottom) + Vector(0, -8)).coords
@@ -283,25 +328,57 @@ class Joueur(Entite, Contenant):
             selected_item.draw(screen, self)
 
     @property
-    def rect_pos(self):
+    def rect_pos(self) -> Vector:
+        """
+        Renvoie la position du coin supérieur gauche du rectangle de l'entité.
+
+        Returns:
+            Vector: La position du coin supérieur gauche du rectangle.
+        """
         return Vector(*self.rect.topleft)
 
     def get_selected_item(self) -> Objet:
-        selected =  next((objet for objet in self.inventaire if objet.est_selectionne), None)
+        """
+        Renvoie l'objet sélectionné dans l'inventaire du joueur.
+
+        Si aucun objet n'est sélectionné, le premier objet de l'inventaire est automatiquement sélectionné.
+
+        Returns:
+            Objet: L'objet sélectionné ou None s'il n'y a aucun objet dans l'inventaire.
+        """
+        selected = next((objet for objet in self.inventaire if objet.est_selectionne), None)
         if selected is None and len(self.inventaire) > 0:
             self.inventaire[0].est_selectionne = True
             selected = self.inventaire[0]
         return selected
 
     def select_item(self, index: int) -> None:
-        self.selected_item = None
-        for i, objet in enumerate(self.inventaire):
-            objet.est_selectionne = False
-            if i == index:
-                objet.est_selectionne = True
-                self.selected_item = objet
+            """
+            Sélectionne un objet de l'inventaire en fonction de son index.
+
+            Args:
+                index (int): L'index de l'objet à sélectionner.
+
+            Returns:
+                None
+            """
+            self.selected_item = None
+            for i, objet in enumerate(self.inventaire):
+                objet.est_selectionne = False
+                if i == index:
+                    objet.est_selectionne = True
+                    self.selected_item = objet
 
     def get_item_index(self, object: str|Objet) -> int:
+        """
+        Retourne l'index de l'objet spécifié dans l'inventaire du joueur.
+
+        Args:
+            object (str|Objet): L'objet ou le nom de l'objet à rechercher.
+
+        Returns:
+            int: L'index de l'objet dans l'inventaire, ou -1 si l'objet n'est pas trouvé.
+        """
         for i, obj in enumerate(self.inventaire):
             if isinstance(object, str):
                 if obj.nom == object:
@@ -309,5 +386,6 @@ class Joueur(Entite, Contenant):
             else:
                 if obj == object:
                     return i
+        return -1
 
 

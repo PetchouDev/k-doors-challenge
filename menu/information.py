@@ -2,9 +2,11 @@ import tkinter as tk
 
 
 class Information(tk.Toplevel):
+    """Classe pour afficher les informations de réalisation du projet dans une fenêtre tkinter."""
+
     __slots__=["master", "width","height"]
 
-    def __init__(self, master, width, height):  
+    def __init__(self, master, width, height) -> None:
         """
         Initialise un objet Information avec le widget maitre et les dimensions spécifiées de la fenêtre.
 
@@ -18,8 +20,5 @@ class Information(tk.Toplevel):
         self.width = width
         
         self.resizable(height = False, width = False)
-        
-      
 
-    
 

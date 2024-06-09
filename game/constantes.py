@@ -1,5 +1,5 @@
-DEBUG = False
-GHOST = False
+DEBUG = False # Informations de débogage (affichage de la hitbox, etc.)
+GHOST = False # Mode fantôme (pas de collision avec les murs, grande vitesse, etc.)
 
 # constantes du jeu
 FRAME_RATE = 30 # En Hz (ou s-1)

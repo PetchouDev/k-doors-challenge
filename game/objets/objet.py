@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 class Objet:
     """Une classe représentant un objet du jeu"""
 
-    __slots__ = ("id", "nom", "description", "image", "quantite", "quantite_max", "est_selectionne")
+    __slots__ = ("id", "nom", "description", "image", "quantite", "quantite_max", "est_selectionne", "offsets")
 
     def __init__(self, nom:str="Lorem Ipsum", description:str="Lorem Ipsum", quantite:int=1, quantite_max:int=1, est_selectionne:bool=False) -> None:
         self.id = uuid.uuid4()

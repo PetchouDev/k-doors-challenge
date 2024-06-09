@@ -1,20 +1,25 @@
+# Librairies de la bibliothèque standard
 from __future__ import annotations # Permet d'utiliser le nom de la classe dans la définition de la classe
+from typing import Optional, TYPE_CHECKING
+from time import time
 
+# Librairies de la bibliothèque tierce
 import pygame
 pygame.mixer.init() 
 
-from typing import Optional, TYPE_CHECKING
+# Librairies locales
 from engine.utils import Vector
 import datetime
 from ..utils import get_image
 from ..constantes import FRAME_RATE, PLAYER_SPEED, DISTANCE_AGRO_MONSTRES, DUREE_ROUGE_ENTITE_APRES_ATTAQUE, SOUNDS
-from time import time
+
 
 if TYPE_CHECKING:
     from .joueur import Joueur
     from engine.ui.tilemap import Tilemap
 else:
     Joueur = None
+
 
 class Entite(pygame.sprite.Sprite):
     """Représente une entité du jeu (joueur, monstre, coffre, etc.)"""
@@ -25,52 +30,47 @@ class Entite(pygame.sprite.Sprite):
 
 
     def __init__(self, nom:str, vie:int, vie_max:int, position:Vector, vitesse:float=1, degats:int=0, temps_attente:int=0, width:int=32, height:int=32) -> None:
+        """
+        Initialise une instance de la classe Entite.
+
+        Args:
+            nom (str): Le nom de l'entité.
+            vie (int): Le nombre de points de vie de l'entité.
+            vie_max (int): Le nombre maximum de points de vie de l'entité.
+            position (Vector): La position de l'entité dans l'espace.
+            vitesse (float, optional): La vitesse de déplacement de l'entité. Par défaut 1.
+            degats (int, optional): Les dégâts infligés par l'entité. Par défaut 0.
+            temps_attente (int, optional): Le temps d'attente avant de pouvoir attaquer, en millisecondes. Par défaut 0.
+            width (int, optional): La largeur de l'entité. Par défaut 32.
+            height (int, optional): La hauteur de l'entité. Par défaut 32.
+        """
+        
         self.nom = nom
         self.vie = vie
         self.vie_max = vie_max
         self.position = position
-        self.vitesse = vitesse #Vitesse de déplacement de l'entité, 1.0 par défaut
-        self.degats = degats #Dégâts infligés par l'entité, 0 par défaut
-        self.temps_attente = temps_attente #Temps d'attente avant de pouvoir attaquer, 0 par défaut, en ms
+        self.vitesse = vitesse
+        self.degats = degats
+        self.temps_attente = temps_attente
         self.en_attente: Optional[datetime.datetime] = None
         self.rouge_jusqua = None
-        # ? Une entité n'est pas régénérable, contrairement au joueur
 
-        super().__init__() # Appel du constructeur de la classe mère
+        super().__init__()
 
-        # créer des attributs pour stocker l'orientation de l'entité et sa direction de déplacement
-        self.orientation = "S" # N, NE, E, SE, S, SO, O, NO
-
-        # definir une taille pour les collisions
+        self.orientation = "S"
         self.width = 32
         self.height = 32
 
-
-        #Information commune à toutes les entités
-
-        # definir une oriantation pour le joueur (par défault au sud)
         self.orientation = "S"
-
-        # compter l'image d'animation
         self.frame = 0
-
-        # compter le temps de chaque frame
         self.clock = 0
-
-
-        # intervalle de temps avec la frame précédente
         self.last_frame = time()
-
-        # Décalage de flottement
         self.flottement = Vector(0, 0)
-
-        # ombre de l'entité
         self.ombre = pygame.Surface((32, 12))
         pygame.draw.ellipse(self.ombre, (64, 64, 64, 64), (0, 0, 32, 12))
         self.ombre.set_colorkey((0, 0, 0))
         self.ombre_rect = self.ombre.get_rect()
 
-    
     def est_attaquable(self, attaquant: Entite) -> bool:
         """Indique si l'entité est attaquable
 
@@ -127,15 +127,34 @@ class Entite(pygame.sprite.Sprite):
         return True 
     
     @property
-    def occupe(self):
-        return True if self.en_attente is not None and datetime.datetime.now() < self.en_attente else False
+    def occupe(self) -> bool:
+            """
+            Vérifie si l'entité est occupée.
+
+            Returns:
+                bool: True si l'entité est occupée, False sinon.
+            """
+            return True if self.en_attente is not None and datetime.datetime.now() < self.en_attente else False
 
     @property
     def real_pos(self) -> Vector:
+        """
+        Renvoie la position réelle de l'entité.
+
+        :return: Un objet Vector représentant la position réelle de l'entité.
+        """
         return Vector(*self.rect.center)
     
     def from_json(data_json: dict) -> Entite:
-        """Crée une entité à partir d'un dictionnaire JSON"""
+        """
+        Crée une instance de la classe Entite à partir d'un dictionnaire JSON.
+
+        Args:
+            data_json (dict): Le dictionnaire JSON contenant les données de l'entité.
+
+        Returns:
+            Entite: Une instance de la classe Entite créée à partir des données JSON.
+        """
         return Entite(
             nom=data_json["nom"],
             vie=data_json["vie"],
@@ -149,7 +168,12 @@ class Entite(pygame.sprite.Sprite):
         )
 
     def to_json(self) -> dict:
-        """Convertit l'entité en un dictionnaire JSON"""
+        """
+        Convertit l'objet en un dictionnaire JSON.
+
+        Returns:
+            dict: Le dictionnaire JSON représentant l'objet.
+        """
         return {
             "nom": self.nom,
             "vie": self.vie,
@@ -162,11 +186,30 @@ class Entite(pygame.sprite.Sprite):
             "height": self.height
         }
     
-    
-    def get_image(self, row, col):
+    def get_image(self, row, col) -> pygame.Surface:
+        """
+        Renvoie l'image correspondante à la position spécifiée.
+
+        Args:
+            row (int): Le numéro de ligne de l'image.
+            col (int): Le numéro de colonne de l'image.
+
+        Returns:
+            pygame.Surface: L'image correspondante à la position spécifiée.
+        """
         return get_image(self, row, col)
     
-    def get_frame(self, velocity: Vector):
+    def get_frame(self, velocity: Vector) -> pygame.Surface:
+        """
+        Renvoie la surface d'image correspondante à l'entité en fonction de sa vitesse et de sa direction.
+
+        Args:
+            velocity (Vector): Le vecteur de vitesse de l'entité.
+
+        Returns:
+            pygame.Surface: La surface d'image correspondante à l'entité.
+
+        """
         # mise à jour de l'horloge
         self.clock += PLAYER_SPEED * self.vitesse / (FRAME_RATE * 50)
         if self.vitesse <= 0:
@@ -186,6 +229,20 @@ class Entite(pygame.sprite.Sprite):
             return self.images[self.orientation][self.frame]
 
     def get_orientation(self, velocity: Vector) -> str:
+        """
+        Renvoie l'orientation de l'entité en fonction de sa vélocité.
+
+        Args:
+            velocity (Vector): La vélocité de l'entité.
+
+        Returns:
+            str: L'orientation de l'entité. Les valeurs possibles sont :
+                - "N" pour le nord
+                - "S" pour le sud
+                - "E" pour l'est
+                - "O" pour l'ouest
+                - Une combinaison de ces valeurs pour les orientations diagonales.
+        """
         if velocity.x == 0 and velocity.y == 0:
             return self.orientation
         else:
@@ -203,45 +260,57 @@ class Entite(pygame.sprite.Sprite):
             return orientation
 
     def draw(self, screen: pygame.display, player_pos: Vector, map: Tilemap) -> None:
-        # position par rapport au joueur
-        distance = self.real_pos - player_pos
+            """
+            Dessine l'entité à l'écran.
 
-    
-        if self.vitesse > 0:
-            if distance.distance() <= DISTANCE_AGRO_MONSTRES:
-                angle = distance.angle()
+            Args:
+                screen (pygame.display): L'écran sur lequel l'entité doit être dessinée.
+                player_pos (Vector): La position du joueur.
+                map (Tilemap): La carte sur laquelle l'entité se trouve.
 
-                # en déduire l'orientation de l'entité en fonction de l'angle
-                if 45 <= angle < 135:
-                    self.orientation = "N"
-                elif 135 <= angle < 225:
-                    self.orientation = "E"
-                elif 225 <= angle < 315:
-                    self.orientation = "S"
-                else:
-                    self.orientation = "O"
+            Returns:
+                None
+            """
+            
+            # position par rapport au joueur
+            distance = self.real_pos - player_pos
 
         
+            if self.vitesse > 0:
+                if distance.distance() <= DISTANCE_AGRO_MONSTRES:
+                    angle = distance.angle()
 
-        image = self.get_frame(distance)        
+                    # en déduire l'orientation de l'entité en fonction de l'angle
+                    if 45 <= angle < 135:
+                        self.orientation = "N"
+                    elif 135 <= angle < 225:
+                        self.orientation = "E"
+                    elif 225 <= angle < 315:
+                        self.orientation = "S"
+                    else:
+                        self.orientation = "O"
 
-        # calculer la position de l'entité à l'écran
-        render_pos = self.position + map.offset
+            
 
-        # placer l'entité à l'écran
-        self.rect.topleft = (render_pos + self.flottement).coords
+            image = self.get_frame(distance)        
 
-        # dessiner une ellipse pour l'ombre (x=32, y=16) centrée sur le milieu du bas de l'entité
-        self.ombre_rect.midbottom = (Vector(*self.rect.midbottom) - self.flottement).coords
+            # calculer la position de l'entité à l'écran
+            render_pos = self.position + map.offset
+
+            # placer l'entité à l'écran
+            self.rect.topleft = (render_pos + self.flottement).coords
+
+            # dessiner une ellipse pour l'ombre (x=32, y=16) centrée sur le milieu du bas de l'entité
+            self.ombre_rect.midbottom = (Vector(*self.rect.midbottom) - self.flottement).coords
 
 
-        if self.vitesse > 0 and self.rouge_jusqua is not None and datetime.datetime.now() < self.rouge_jusqua:
-            #dessin de l'entité en rouge
-            image.fill((255, 0, 0, 128), special_flags=pygame.BLEND_RGBA_MULT)
-            screen.blit(image, self.rect.topleft)
-        else:
-            # dessin du l'entité
-            screen.blit(image, self.rect.topleft)
-    
-        return self.rect.topleft
+            if self.vitesse > 0 and self.rouge_jusqua is not None and datetime.datetime.now() < self.rouge_jusqua:
+                #dessin de l'entité en rouge
+                image.fill((255, 0, 0, 128), special_flags=pygame.BLEND_RGBA_MULT)
+                screen.blit(image, self.rect.topleft)
+            else:
+                # dessin du l'entité
+                screen.blit(image, self.rect.topleft)
+        
+            return self.rect.topleft
 

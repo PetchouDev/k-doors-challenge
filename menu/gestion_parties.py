@@ -3,25 +3,34 @@ from tkinter import messagebox
 
 import os, pathlib, json
 
+
+# chemin du répertoire actuel
 PATH = pathlib.Path(__file__).parent.parent.absolute()
 
 class GestionParties(tk.Toplevel):
     """
         Initialise un objet GestionParties avec le widget maitre et les dimensions spécifiées de la fenêtre.
-
-        
     """
-    def __init__(self, master):
+    def __init__(self, master) -> None:
+        """
+        Initialise la classe GestionParties.
+
+        :param master: La fenêtre principale de l'application.
+        """
+        
         super().__init__()
         self.master = master
         self.title("Gestion des parties")
         self.resizable(height=True, width=True)
         self.widgets()
 
-    def widgets(self):
-        '''
-        Création des widgets un à un et insertion grâce aux fonctions grid()
-        '''
+    def widgets(self) -> None:
+        """
+        Cette méthode crée et affiche les widgets nécessaires pour afficher les parties et leurs informations.
+        Elle supprime d'abord tous les widgets existants, puis crée les en-têtes et les labels pour chaque partie.
+        Enfin, elle crée les boutons de suppression et de lancement pour chaque partie.
+        """
+        
         # supprimer tous les widgets
         for widget in self.winfo_children():
             widget.destroy()
@@ -45,7 +54,7 @@ class GestionParties(tk.Toplevel):
             # bouton pour lance la partie
             tk.Button(self, text="Lancer", font=("Arial", 12), command=lambda: self.lancer_partie(id)).grid(row=i+1, column=6, columnspan=2)
 
-    def supprimer_partie(self, id):
+    def supprimer_partie(self, id) -> None:
         """
           fonction qui supprime la partie correspondant à l'id
           :paramètres: id: entier représentant l'identité de la partie
@@ -65,11 +74,10 @@ class GestionParties(tk.Toplevel):
             # mettre à jour l'affichage
             self.widgets()
 
-    def lancer_partie(self, id):
+    def lancer_partie(self, id) -> None:
         """
-          fonction qui lance la partie
-          :paramètres: id : entier représentant l'identité de la partie
-          :return:
-          """
-
+        fonction qui lance la partie
+            :paramètres: id : entier représentant l'identité de la partie
+            :return:
+        """
         self.master.start_game(id)
